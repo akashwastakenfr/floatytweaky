@@ -1,0 +1,30 @@
+name: Build Tweak
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Theos environment
+        uses: gettheos/setup-theos@v1
+        with:
+          sdk: iOS/16.5
+
+      - name: Build Rootless DEB Package
+        run: |
+          make clean
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+
+      - name: Upload DEB Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: IGFloatingTabBar-deb
+          path: packages/*.deb
+          
