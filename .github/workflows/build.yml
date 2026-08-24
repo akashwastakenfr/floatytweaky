@@ -12,10 +12,12 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Theos environment
-        uses: gettheos/setup-theos@v1
-        with:
-          sdk: iOS/16.5
+      - name: Setup Theos
+        uses: Randomblock1/theos-action@v1
+
+      - name: Download iOS SDK
+        run: |
+          git clone --quiet --depth=1 https://github.com/theos/sdks.git $THEOS/sdks
 
       - name: Build Rootless DEB Package
         run: |
@@ -28,3 +30,4 @@ jobs:
           name: IGFloatingTabBar-deb
           path: packages/*.deb
           
+
