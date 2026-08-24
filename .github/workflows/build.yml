@@ -15,10 +15,6 @@ jobs:
       - name: Setup Theos
         uses: Randomblock1/theos-action@v1
 
-      - name: Download iOS SDK
-        run: |
-          git clone --quiet --depth=1 https://github.com/theos/sdks.git $THEOS/sdks
-
       - name: Build Rootless DEB Package
         run: |
           make clean
@@ -29,5 +25,3 @@ jobs:
         with:
           name: IGFloatingTabBar-deb
           path: packages/*.deb
-          
-
