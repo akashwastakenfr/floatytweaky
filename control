@@ -2,7 +2,7 @@ Package: com.custom.igfloatingtabbar
 Name: IG Floating TabBar
 Depends: mobilesubstrate
 Version: 1.0.0
-Architecture: iphoneos-arm
+Architecture: iphoneos-arm64
 Description: Floating pill-style tab bar tweak for Instagram on iOS 15.8.8.
 Maintainer: Developer
 Author: Developer
