@@ -5,36 +5,30 @@
 - (void)layoutSubviews {
     %orig;
 
-    // Target Instagram exclusively
     NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
-    if ([bundleID isEqualToString:@"com.burbn.instagram"]) {
-        
-        // Define floating dimensions
-        CGFloat sideMargin = 18.0;
-        CGFloat bottomMargin = 16.0;
-        CGFloat height = 54.0;
-        
-        CGRect superBounds = self.superview ? self.superview.bounds : self.bounds;
-        CGFloat width = superBounds.size.width - (sideMargin * 2);
-        CGFloat x = sideMargin;
-        CGFloat y = superBounds.size.height - height - bottomMargin;
+    if (![bundleID isEqualToString:@"com.burbn.instagram"]) return;
 
-        // Apply new floating frame
-        self.frame = CGRectMake(x, y, width, height);
-        
-        // Apply pill curvature & clipping
+    CGFloat sideMargin = 16.0;
+    CGFloat bottomMargin = 16.0;
+    CGFloat height = 52.0;
+
+    UIView *parent = self.superview;
+    if (!parent) return;
+
+    CGRect superBounds = parent.bounds;
+    CGFloat targetWidth = superBounds.size.width - (sideMargin * 2);
+    CGFloat targetX = sideMargin;
+    CGFloat targetY = superBounds.size.height - height - bottomMargin;
+
+    CGRect targetFrame = CGRectMake(targetX, targetY, targetWidth, height);
+
+    // Prevent infinite layout loop recursion
+    if (!CGRectEqualToRect(self.frame, targetFrame)) {
+        self.frame = targetFrame;
         self.layer.cornerRadius = height / 2.0;
         self.layer.masksToBounds = YES;
-        
-        // Ensure background blur fits floating frame
-        for (UIView *subview in self.subviews) {
-            if ([NSStringFromClass([subview class]) containsString:@"Background"]) {
-                subview.layer.cornerRadius = height / 2.0;
-                subview.clipsToBounds = YES;
-            }
-        }
+        self.clipsToBounds = YES;
     }
 }
 
 %end
-
