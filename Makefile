@@ -8,5 +8,8 @@ TWEAK_NAME = IGFloatingTabBar
 
 IGFloatingTabBar_FILES = Tweak.xm
 IGFloatingTabBar_CFLAGS = -fobjc-arc
+IGFloatingTabBar_FRAMEWORKS = UIKit CoreGraphics
 
 include $(THEOS)/makefiles/tweak.mk
+SUBPROJECTS += igfloatingtabbarprefs
+include $(THEOS_MAKE_PATH)/aggregate.mk
