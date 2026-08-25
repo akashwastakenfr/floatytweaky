@@ -1,4 +1,7 @@
 #import <Preferences/PSListController.h>
+#import <spawn.h>
+
+extern char **environ;
 
 @interface IGFTRootListController : PSListController
 @end
@@ -12,15 +15,14 @@
     return _specifiers;
 }
 
-- (void)saveAndReload {
-    CFNotificationCenterPostNotification(
-        CFNotificationCenterGetDarwinNotifyCenter(),
-        CFSTR("com.custom.igfloatingtabbar/reload"),
-        NULL,
-        NULL,
-        YES
-    );
+- (void)respring {
+    pid_t pid;
+    const char *args1[] = {"sbreload", NULL};
+    posix_spawn(&pid, "/var/jb/usr/bin/sbreload", NULL, NULL, (char *const *)args1, environ);
+    
+    // Fallback to SpringBoard restart
+    const char *args2[] = {"killall", "-9", "SpringBoard", NULL};
+    posix_spawn(&pid, "/var/jb/usr/bin/killall", NULL, NULL, (char *const *)args2, environ);
 }
 
 @end
-
