@@ -2,7 +2,6 @@
 
 static NSString *const kPrefPath = @"/var/jb/var/mobile/Library/Preferences/com.custom.igfloatingtabbar.plist";
 
-// Preference Defaults
 static BOOL kEnabled = YES;
 static BOOL kHideOnScroll = YES;
 static BOOL kInstantChatHide = YES;
@@ -25,6 +24,8 @@ static void loadPrefs() {
 }
 
 static __weak UIView *gTabBarView = nil;
+static BOOL gIsBarHiddenByScroll = NO;
+static CGFloat gLastOffsetY = 0;
 
 %hook UIView
 
@@ -38,6 +39,9 @@ static __weak UIView *gTabBarView = nil;
     NSString *className = NSStringFromClass([self class]);
     if ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"]) {
         gTabBarView = self;
+
+        // Instant exit: If Instagram marked it hidden, stop forcing layouts immediately
+        if (self.hidden || self.alpha == 0.0) return;
 
         UIView *parent = self.superview;
         if (!parent) return;
@@ -59,7 +63,9 @@ static __weak UIView *gTabBarView = nil;
         self.layer.masksToBounds = NO;
         self.clipsToBounds = NO;
 
-        self.backgroundColor = [UIColor colorWithRed:0.10 green:0.10 blue:0.10 alpha:kAlpha];
+        if (!gIsBarHiddenByScroll) {
+            self.backgroundColor = [UIColor colorWithRed:0.10 green:0.10 blue:0.10 alpha:kAlpha];
+        }
         self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.15].CGColor;
         self.layer.borderWidth = 1.0;
 
@@ -82,21 +88,35 @@ static __weak UIView *gTabBarView = nil;
     }
 }
 
-// Instant Chat Hide Fix
+// Instant Chat Hide Fix: Cut transition animation delay to zero
 - (void)setHidden:(BOOL)hidden {
     NSString *className = NSStringFromClass([self class]);
-    if (kInstantChatHide && ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"])) {
-        [UIView performWithoutAnimation:^{
-            %orig(hidden);
-        }];
-    } else {
-        %orig(hidden);
+    if ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"]) {
+        if (kInstantChatHide && hidden) {
+            [UIView performWithoutAnimation:^{
+                self.alpha = 0.0;
+                %orig(YES);
+            }];
+            return;
+        }
     }
+    %orig(hidden);
+}
+
+- (void)setAlpha:(CGFloat)alpha {
+    NSString *className = NSStringFromClass([self class]);
+    if ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"]) {
+        if (self.hidden && alpha > 0) {
+            %orig(0.0);
+            return;
+        }
+    }
+    %orig(alpha);
 }
 
 %end
 
-// Scroll-to-Hide Handler for Reels, DMs, & Feeds
+// Smooth Scroll-to-Hide Handler
 %hook UIScrollView
 
 - (void)setContentOffset:(CGPoint)contentOffset {
@@ -104,16 +124,23 @@ static __weak UIView *gTabBarView = nil;
 
     if (!kEnabled || !kHideOnScroll || !gTabBarView) return;
 
-    UIPanGestureRecognizer *pan = self.panGestureRecognizer;
-    CGPoint velocity = [pan velocityInView:self];
+    // Ignore bounces at extreme top or bottom limits
+    if (self.contentSize.height <= self.bounds.size.height) return;
+    if (contentOffset.y <= 0 || contentOffset.y >= (self.contentSize.height - self.bounds.size.height)) return;
 
-    if (velocity.y < -300) { // Scrolling DOWN -> Hide bar
-        [UIView animateWithDuration:0.25 animations:^{
+    CGFloat deltaY = contentOffset.y - gLastOffsetY;
+    gLastOffsetY = contentOffset.y;
+
+    // State lock with 15pt threshold prevents flicker during scroll deceleration
+    if (deltaY > 15.0 && !gIsBarHiddenByScroll) { 
+        gIsBarHiddenByScroll = YES;
+        [UIView animateWithDuration:0.2 animations:^{
             gTabBarView.alpha = 0.0;
             gTabBarView.transform = CGAffineTransformMakeTranslation(0, 80);
         }];
-    } else if (velocity.y > 300) { // Scrolling UP -> Show bar
-        [UIView animateWithDuration:0.25 animations:^{
+    } else if (deltaY < -15.0 && gIsBarHiddenByScroll) { 
+        gIsBarHiddenByScroll = NO;
+        [UIView animateWithDuration:0.2 animations:^{
             gTabBarView.alpha = 1.0;
             gTabBarView.transform = CGAffineTransformIdentity;
         }];
