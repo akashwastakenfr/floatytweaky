@@ -24,43 +24,210 @@
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
+
+        <!-- SIZING & MARGINS -->
         <dict>
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
-            <string>Behavior</string>
+            <string>Bar Height &amp; Margins</string>
         </dict>
         <dict>
             <key>cell</key>
-            <string>PSSwitchCell</string>
+            <string>PSSliderCell</string>
             <key>default</key>
+            <real>54</real>
+            <key>min</key>
+            <real>40</real>
+            <key>max</key>
+            <real>70</real>
+            <key>showValue</key>
             <true/>
             <key>defaults</key>
             <string>com.custom.igfloatingtabbar</string>
             <key>key</key>
-            <string>hideOnScroll</string>
-            <key>label</key>
-            <string>Hide on Scroll (Reels/Feed/DM)</string>
+            <string>barHeight</string>
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
         <dict>
             <key>cell</key>
-            <string>PSSwitchCell</string>
+            <string>PSSliderCell</string>
             <key>default</key>
+            <real>16</real>
+            <key>min</key>
+            <real>4</real>
+            <key>max</key>
+            <real>36</real>
+            <key>showValue</key>
             <true/>
             <key>defaults</key>
             <string>com.custom.igfloatingtabbar</string>
             <key>key</key>
-            <string>instantChatHide</string>
-            <key>label</key>
-            <string>Instant Hide in Chat</string>
+            <string>sideMargin</string>
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>default</key>
+            <real>16</real>
+            <key>min</key>
+            <real>4</real>
+            <key>max</key>
+            <real>36</real>
+            <key>showValue</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.custom.igfloatingtabbar</string>
+            <key>key</key>
+            <string>bottomMargin</string>
+            <key>PostNotification</key>
+            <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+
+        <!-- COLOR & OPACITY -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Background Color (RGB) &amp; Opacity</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>default</key>
+            <real>0.10</real>
+            <key>min</key>
+            <real>0.0</real>
+            <key>max</key>
+            <real>1.0</real>
+            <key>showValue</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.custom.igfloatingtabbar</string>
+            <key>key</key>
+            <string>redColor</string>
+            <key>PostNotification</key>
+            <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>default</key>
+            <real>0.10</real>
+            <key>min</key>
+            <real>0.0</real>
+            <key>max</key>
+            <real>1.0</real>
+            <key>showValue</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.custom.igfloatingtabbar</string>
+            <key>key</key>
+            <string>greenColor</string>
+            <key>PostNotification</key>
+            <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>default</key>
+            <real>0.10</real>
+            <key>min</key>
+            <real>0.0</real>
+            <key>max</key>
+            <real>1.0</real>
+            <key>showValue</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.custom.igfloatingtabbar</string>
+            <key>key</key>
+            <string>blueColor</string>
+            <key>PostNotification</key>
+            <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>default</key>
+            <real>0.88</real>
+            <key>min</key>
+            <real>0.1</real>
+            <key>max</key>
+            <real>1.0</real>
+            <key>showValue</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.custom.igfloatingtabbar</string>
+            <key>key</key>
+            <string>barAlpha</string>
+            <key>PostNotification</key>
+            <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+
+        <!-- SHADOW & BORDER -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Shadow &amp; Border</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>default</key>
+            <real>0.50</real>
+            <key>min</key>
+            <real>0.0</real>
+            <key>max</key>
+            <real>1.0</real>
+            <key>showValue</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.custom.igfloatingtabbar</string>
+            <key>key</key>
+            <string>shadowOpacity</string>
+            <key>PostNotification</key>
+            <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSSliderCell</string>
+            <key>default</key>
+            <real>8.0</real>
+            <key>min</key>
+            <real>0.0</real>
+            <key>max</key>
+            <real>20.0</real>
+            <key>showValue</key>
+            <true/>
+            <key>defaults</key>
+            <string>com.custom.igfloatingtabbar</string>
+            <key>key</key>
+            <string>shadowRadius</string>
+            <key>PostNotification</key>
+            <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+
+        <!-- RESPRING BUTTON -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>Apply Settings</string>
+        </dict>
+        <dict>
+            <key>cell</key>
+            <string>PSButtonCell</string>
+            <key>action</key>
+            <string>respring</string>
+            <key>label</key>
+            <string>Respring / Apply Changes</string>
         </dict>
     </array>
     <key>title</key>
     <string>IG Floating TabBar</string>
 </dict>
 </plist>
-
