@@ -2,24 +2,37 @@
 
 static NSString *const kPrefPath = @"/var/jb/var/mobile/Library/Preferences/com.custom.igfloatingtabbar.plist";
 
+// Preference Values & Defaults
 static BOOL kEnabled = YES;
-static BOOL kHideOnScroll = YES;
-static BOOL kInstantChatHide = YES;
 static CGFloat kSideMargin = 16.0;
 static CGFloat kBottomMargin = 16.0;
 static CGFloat kBarHeight = 54.0;
-static CGFloat kAlpha = 0.88;
+static CGFloat kBarAlpha = 0.88;
+static CGFloat kRedColor = 0.10;
+static CGFloat kGreenColor = 0.10;
+static CGFloat kBlueColor = 0.10;
+static CGFloat kShadowOpacity = 0.50;
+static CGFloat kShadowRadius = 8.0;
+static CGFloat kBorderWidth = 1.0;
+static CGFloat kBorderAlpha = 0.15;
 
 static void loadPrefs() {
     NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     if (prefs) {
         kEnabled = prefs[@"enabled"] ? [prefs[@"enabled"] boolValue] : YES;
-        kHideOnScroll = prefs[@"hideOnScroll"] ? [prefs[@"hideOnScroll"] boolValue] : YES;
-        kInstantChatHide = prefs[@"instantChatHide"] ? [prefs[@"instantChatHide"] boolValue] : YES;
         kSideMargin = prefs[@"sideMargin"] ? [prefs[@"sideMargin"] floatValue] : 16.0;
         kBottomMargin = prefs[@"bottomMargin"] ? [prefs[@"bottomMargin"] floatValue] : 16.0;
         kBarHeight = prefs[@"barHeight"] ? [prefs[@"barHeight"] floatValue] : 54.0;
-        kAlpha = prefs[@"barAlpha"] ? [prefs[@"barAlpha"] floatValue] : 0.88;
+        kBarAlpha = prefs[@"barAlpha"] ? [prefs[@"barAlpha"] floatValue] : 0.88;
+        
+        kRedColor = prefs[@"redColor"] ? [prefs[@"redColor"] floatValue] : 0.10;
+        kGreenColor = prefs[@"greenColor"] ? [prefs[@"greenColor"] floatValue] : 0.10;
+        kBlueColor = prefs[@"blueColor"] ? [prefs[@"blueColor"] floatValue] : 0.10;
+        
+        kShadowOpacity = prefs[@"shadowOpacity"] ? [prefs[@"shadowOpacity"] floatValue] : 0.50;
+        kShadowRadius = prefs[@"shadowRadius"] ? [prefs[@"shadowRadius"] floatValue] : 8.0;
+        kBorderWidth = prefs[@"borderWidth"] ? [prefs[@"borderWidth"] floatValue] : 1.0;
+        kBorderAlpha = prefs[@"borderAlpha"] ? [prefs[@"borderAlpha"] floatValue] : 0.15;
     }
 }
 
@@ -40,7 +53,6 @@ static CGFloat gLastOffsetY = 0;
     if ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"]) {
         gTabBarView = self;
 
-        // Instant exit: If Instagram marked it hidden, stop forcing layouts immediately
         if (self.hidden || self.alpha == 0.0) return;
 
         UIView *parent = self.superview;
@@ -63,16 +75,20 @@ static CGFloat gLastOffsetY = 0;
         self.layer.masksToBounds = NO;
         self.clipsToBounds = NO;
 
+        // Apply Custom Background RGB + Alpha
         if (!gIsBarHiddenByScroll) {
-            self.backgroundColor = [UIColor colorWithRed:0.10 green:0.10 blue:0.10 alpha:kAlpha];
+            self.backgroundColor = [UIColor colorWithRed:kRedColor green:kGreenColor blue:kBlueColor alpha:kBarAlpha];
         }
-        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:0.15].CGColor;
-        self.layer.borderWidth = 1.0;
 
+        // Apply Custom Border
+        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:kBorderAlpha].CGColor;
+        self.layer.borderWidth = kBorderWidth;
+
+        // Apply Custom Shadow
         self.layer.shadowColor = [UIColor blackColor].CGColor;
-        self.layer.shadowOpacity = 0.5;
+        self.layer.shadowOpacity = kShadowOpacity;
         self.layer.shadowOffset = CGSizeMake(0, 4);
-        self.layer.shadowRadius = 8.0;
+        self.layer.shadowRadius = kShadowRadius;
 
         for (UIView *subview in self.subviews) {
             NSString *subClassName = NSStringFromClass([subview class]);
@@ -88,32 +104,6 @@ static CGFloat gLastOffsetY = 0;
     }
 }
 
-// Instant Chat Hide Fix: Cut transition animation delay to zero
-- (void)setHidden:(BOOL)hidden {
-    NSString *className = NSStringFromClass([self class]);
-    if ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"]) {
-        if (kInstantChatHide && hidden) {
-            [UIView performWithoutAnimation:^{
-                self.alpha = 0.0;
-                %orig(YES);
-            }];
-            return;
-        }
-    }
-    %orig(hidden);
-}
-
-- (void)setAlpha:(CGFloat)alpha {
-    NSString *className = NSStringFromClass([self class]);
-    if ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"]) {
-        if (self.hidden && alpha > 0) {
-            %orig(0.0);
-            return;
-        }
-    }
-    %orig(alpha);
-}
-
 %end
 
 // Smooth Scroll-to-Hide Handler
@@ -122,25 +112,23 @@ static CGFloat gLastOffsetY = 0;
 - (void)setContentOffset:(CGPoint)contentOffset {
     %orig;
 
-    if (!kEnabled || !kHideOnScroll || !gTabBarView) return;
+    if (!kEnabled || !gTabBarView) return;
 
-    // Ignore bounces at extreme top or bottom limits
     if (self.contentSize.height <= self.bounds.size.height) return;
     if (contentOffset.y <= 0 || contentOffset.y >= (self.contentSize.height - self.bounds.size.height)) return;
 
     CGFloat deltaY = contentOffset.y - gLastOffsetY;
     gLastOffsetY = contentOffset.y;
 
-    // State lock with 15pt threshold prevents flicker during scroll deceleration
     if (deltaY > 15.0 && !gIsBarHiddenByScroll) { 
         gIsBarHiddenByScroll = YES;
-        [UIView animateWithDuration:0.2 animations:^{
+        [UIView animateWithDuration:0.25 animations:^{
             gTabBarView.alpha = 0.0;
             gTabBarView.transform = CGAffineTransformMakeTranslation(0, 80);
         }];
     } else if (deltaY < -15.0 && gIsBarHiddenByScroll) { 
         gIsBarHiddenByScroll = NO;
-        [UIView animateWithDuration:0.2 animations:^{
+        [UIView animateWithDuration:0.25 animations:^{
             gTabBarView.alpha = 1.0;
             gTabBarView.transform = CGAffineTransformIdentity;
         }];
