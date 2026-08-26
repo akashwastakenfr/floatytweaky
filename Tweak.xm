@@ -1,4 +1,5 @@
 #import <UIKit/UIKit.h>
+#import <objc/runtime.h>
 
 static NSString *const kPrefPath = @"/var/jb/var/mobile/Library/Preferences/com.custom.igfloatingtabbar.plist";
 
@@ -9,7 +10,8 @@ static CGFloat kBottomMargin = 16.0;
 static CGFloat kBarHeight = 54.0;
 static CGFloat kBarAlpha = 0.88;
 static CGFloat kIconSpacing = 8.0;
-static NSString *kHexColor = @"#1A1A1A";
+static NSString *kHexColor = @"#007AFF"; // default accent
+static NSString *kBlacklist = nil;
 
 // Helper: Convert Hex String to UIColor
 static UIColor *colorFromHexString(NSString *hexString) {
@@ -30,7 +32,7 @@ static UIColor *colorFromHexString(NSString *hexString) {
                            alpha:1.0];
 }
 
-static void loadPrefs() {
+static void loadPrefsFromFile(void) {
     NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
     if (prefs) {
         kEnabled = prefs[@"enabled"] ? [prefs[@"enabled"] boolValue] : YES;
@@ -39,8 +41,27 @@ static void loadPrefs() {
         kBarHeight = prefs[@"barHeight"] ? [prefs[@"barHeight"] floatValue] : 54.0;
         kBarAlpha = prefs[@"barAlpha"] ? [prefs[@"barAlpha"] floatValue] : 0.88;
         kIconSpacing = prefs[@"iconSpacing"] ? [prefs[@"iconSpacing"] floatValue] : 8.0;
-        kHexColor = prefs[@"hexColor"] ? prefs[@"hexColor"] : @"#1A1A1A";
+        NSString *hex = prefs[@"hexColor"] ? prefs[@"hexColor"] : nil;
+        if (hex && [hex isKindOfClass:[NSString class]] && hex.length > 0) {
+            kHexColor = hex;
+        }
+        NSString *black = prefs[@"blacklist"] ? prefs[@"blacklist"] : nil;
+        if (black && [black isKindOfClass:[NSString class]]) {
+            kBlacklist = black;
+        } else {
+            kBlacklist = nil;
+        }
     }
+}
+
+// CFNotification callback wrapper (correct signature)
+static void prefsRecheckCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
+    // reload on main thread to be safe
+    dispatch_async(dispatch_get_main_queue(), ^{
+        @autoreleasepool {
+            loadPrefsFromFile();
+        }
+    });
 }
 
 static __weak UIView *gTabBarView = nil;
@@ -61,12 +82,26 @@ static void setTabBarVisibilityAnimated(UIView *barView, BOOL visible) {
 - (void)layoutSubviews {
     %orig;
 
-    if (!kEnabled) return;
+    // Fast early-outs
     NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
+    if (!bundleID) return;
     if (![bundleID isEqualToString:@"com.burbn.instagram"]) return;
+    if (!kEnabled) return;
+
+    // Check blacklist (comma-separated)
+    if (kBlacklist && kBlacklist.length > 0) {
+        NSArray *parts = [kBlacklist componentsSeparatedByString:@","];
+        for (NSString *p in parts) {
+            NSString *trim = [p stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+            if (trim.length == 0) continue;
+            if ([bundleID isEqualToString:trim] || [bundleID containsString:trim]) return;
+        }
+    }
 
     NSString *className = NSStringFromClass([self class]);
-    if ([className isEqualToString:@"IGTabBar"] || [className isEqualToString:@"IGTabBarView"]) {
+    if (![className isEqualToString:@"IGTabBar"] && ![className isEqualToString:@"IGTabBarView"]) return;
+
+    @try {
         gTabBarView = self;
 
         if (self.hidden || self.alpha == 0.0) return;
@@ -99,8 +134,8 @@ static void setTabBarVisibilityAnimated(UIView *barView, BOOL visible) {
         self.layer.shadowOpacity = 0.0;
         self.layer.borderWidth = 0.0;
 
-        // Remove top border/line CALayers
-        if (self.layer.sublayers) {
+        // Remove top border/line CALayers safely
+        if (self.layer.sublayers && self.layer.sublayers.count > 0) {
             for (CALayer *layer in [self.layer.sublayers copy]) {
                 if (layer.frame.size.height <= 2.0 || [NSStringFromClass([layer class]) containsString:@"Separator"]) {
                     [layer removeFromSuperlayer];
@@ -110,24 +145,24 @@ static void setTabBarVisibilityAnimated(UIView *barView, BOOL visible) {
 
         NSMutableArray<UIView *> *tabButtons = [NSMutableArray array];
 
-        for (UIView *subview in self.subviews) {
+        for (UIView *subview in [self.subviews copy]) {
             NSString *subClassName = NSStringFromClass([subview class]);
 
             // Hide hairline separator views
-            if ([subClassName containsString:@"Separator"] || 
-                [subClassName containsString:@"Hairline"] || 
-                [subClassName containsString:@"Shadow"] || 
-                [subClassName containsString:@"Line"] || 
+            if ([subClassName containsString:@"Separator"] ||
+                [subClassName containsString:@"Hairline"] ||
+                [subClassName containsString:@"Shadow"] ||
+                [subClassName containsString:@"Line"] ||
                 [subClassName containsString:@"Border"] ||
                 subview.frame.size.height <= 3.0) {
-                
+
                 subview.hidden = YES;
                 subview.alpha = 0.0;
                 [subview removeFromSuperview];
             }
             // Strip inner default background views
-            else if ([subClassName containsString:@"Background"] || 
-                     [subClassName containsString:@"VisualEffect"] || 
+            else if ([subClassName containsString:@"Background"] ||
+                     [subClassName containsString:@"VisualEffect"] ||
                      [subClassName containsString:@"Backdrop"]) {
                 subview.layer.cornerRadius = pillRadius;
                 subview.layer.masksToBounds = YES;
@@ -161,6 +196,8 @@ static void setTabBarVisibilityAnimated(UIView *barView, BOOL visible) {
         }
 
         [parent bringSubviewToFront:self];
+    } @catch (NSException *ex) {
+        NSLog(@"[FloatyTweaky] Exception in layoutSubviews: %@", ex);
     }
 }
 
@@ -180,10 +217,10 @@ static void setTabBarVisibilityAnimated(UIView *barView, BOOL visible) {
     CGFloat deltaY = contentOffset.y - gLastOffsetY;
     gLastOffsetY = contentOffset.y;
 
-    if (deltaY > 15.0 && !gIsBarHiddenByScroll) { 
+    if (deltaY > 15.0 && !gIsBarHiddenByScroll) {
         gIsBarHiddenByScroll = YES;
         setTabBarVisibilityAnimated(gTabBarView, NO);
-    } else if (deltaY < -15.0 && gIsBarHiddenByScroll) { 
+    } else if (deltaY < -15.0 && gIsBarHiddenByScroll) {
         gIsBarHiddenByScroll = NO;
         setTabBarVisibilityAnimated(gTabBarView, YES);
     }
@@ -192,11 +229,14 @@ static void setTabBarVisibilityAnimated(UIView *barView, BOOL visible) {
 %end
 
 %ctor {
-    loadPrefs();
+    // Initial load
+    loadPrefsFromFile();
+
+    // Register for Darwin notifications to reload prefs
     CFNotificationCenterAddObserver(
         CFNotificationCenterGetDarwinNotifyCenter(),
         NULL,
-        (CFNotificationCallback)loadPrefs,
+        prefsRecheckCallback,
         CFSTR("com.custom.igfloatingtabbar/reload"),
         NULL,
         CFNotificationSuspensionBehaviorDeliverImmediately
