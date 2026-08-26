@@ -4,14 +4,6 @@
 <dict>
     <key>items</key>
     <array>
-        <!-- LIVE PREVIEW HEADER -->
-        <dict>
-            <key>cell</key>
-            <string>PSGroupCell</string>
-            <key>headerCellClass</key>
-            <string>IGFTPreviewHeaderView</string>
-        </dict>
-
         <!-- MASTER SWITCH -->
         <dict>
             <key>cell</key>
