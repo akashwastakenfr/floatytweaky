@@ -4,11 +4,20 @@
 <dict>
     <key>items</key>
     <array>
+        <!-- LIVE PREVIEW HEADER -->
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>headerCellClass</key>
+            <string>IGFTPreviewHeaderView</string>
+        </dict>
+
+        <!-- MASTER SWITCH -->
         <dict>
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
-            <string>Toggle Tweak</string>
+            <string>MAIN TWEAK SWITCH</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -30,7 +39,7 @@
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
-            <string>Bar Height &amp; Margins</string>
+            <string>PILL HEIGHT (PIXELS)</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -50,6 +59,13 @@
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>SIDE MARGINS (LEFT / RIGHT INSET)</string>
+        </dict>
         <dict>
             <key>cell</key>
             <string>PSSliderCell</string>
@@ -67,6 +83,13 @@
             <string>sideMargin</string>
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>BOTTOM MARGIN (BOTTOM OFFSET)</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -87,12 +110,12 @@
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
 
-        <!-- COLOR & OPACITY -->
+        <!-- BACKGROUND COLOR SLIDERS -->
         <dict>
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
-            <string>Background Color (RGB) &amp; Opacity</string>
+            <string>BACKGROUND RED CHANNEL</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -112,6 +135,13 @@
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>BACKGROUND GREEN CHANNEL</string>
+        </dict>
         <dict>
             <key>cell</key>
             <string>PSSliderCell</string>
@@ -130,6 +160,13 @@
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>BACKGROUND BLUE CHANNEL</string>
+        </dict>
         <dict>
             <key>cell</key>
             <string>PSSliderCell</string>
@@ -147,6 +184,13 @@
             <string>blueColor</string>
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
+        </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>BACKGROUND TRANSPARENCY (ALPHA)</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -172,7 +216,7 @@
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
-            <string>Shadow &amp; Border</string>
+            <string>DROP SHADOW OPACITY</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -192,21 +236,28 @@
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
+
+        <dict>
+            <key>cell</key>
+            <string>PSGroupCell</string>
+            <key>label</key>
+            <string>BORDER LINE THICKNESS</string>
+        </dict>
         <dict>
             <key>cell</key>
             <string>PSSliderCell</string>
             <key>default</key>
-            <real>8.0</real>
+            <real>0.0</real>
             <key>min</key>
             <real>0.0</real>
             <key>max</key>
-            <real>20.0</real>
+            <real>3.0</real>
             <key>showValue</key>
             <true/>
             <key>defaults</key>
             <string>com.custom.igfloatingtabbar</string>
             <key>key</key>
-            <string>shadowRadius</string>
+            <string>borderWidth</string>
             <key>PostNotification</key>
             <string>com.custom.igfloatingtabbar/reload</string>
         </dict>
@@ -216,7 +267,7 @@
             <key>cell</key>
             <string>PSGroupCell</string>
             <key>label</key>
-            <string>Apply Settings</string>
+            <string>APPLY CHANGES</string>
         </dict>
         <dict>
             <key>cell</key>
@@ -224,7 +275,7 @@
             <key>action</key>
             <string>respring</string>
             <key>label</key>
-            <string>Respring / Apply Changes</string>
+            <string>Respring / Reload SpringBoard</string>
         </dict>
     </array>
     <key>title</key>
