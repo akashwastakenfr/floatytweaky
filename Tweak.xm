@@ -47,6 +47,15 @@ static __weak UIView *gTabBarView = nil;
 static BOOL gIsBarHiddenByScroll = NO;
 static CGFloat gLastOffsetY = 0;
 
+// Extracted animation helper (avoids inline block brace miscounts in Logos)
+static void setTabBarVisibilityAnimated(UIView *barView, BOOL visible) {
+    if (!barView) return;
+    [UIView animateWithDuration:0.25 animations:^{
+        barView.alpha = visible ? 1.0 : 0.0;
+        barView.transform = visible ? CGAffineTransformIdentity : CGAffineTransformMakeTranslation(0, 80);
+    }];
+}
+
 %hook UIView
 
 - (void)layoutSubviews {
@@ -68,7 +77,6 @@ static CGFloat gLastOffsetY = 0;
         CGRect superBounds = parent.bounds;
         if (superBounds.size.height < 100) return;
 
-        // Floaty Bar Spacing & Positioning
         CGFloat targetWidth = superBounds.size.width - (kSideMargin * 2);
         CGFloat targetX = kSideMargin;
         CGFloat targetY = superBounds.size.height - kBarHeight - kBottomMargin;
@@ -83,7 +91,6 @@ static CGFloat gLastOffsetY = 0;
         self.layer.masksToBounds = NO;
         self.clipsToBounds = NO;
 
-        // Apply Color & Opacity (No Shadows)
         if (!gIsBarHiddenByScroll) {
             UIColor *baseColor = colorFromHexString(kHexColor);
             self.backgroundColor = [baseColor colorWithAlphaComponent:kBarAlpha];
@@ -92,7 +99,7 @@ static CGFloat gLastOffsetY = 0;
         self.layer.shadowOpacity = 0.0;
         self.layer.borderWidth = 0.0;
 
-        // Sublayer Top Line Neutralization
+        // Remove top border/line CALayers
         if (self.layer.sublayers) {
             for (CALayer *layer in [self.layer.sublayers copy]) {
                 if (layer.frame.size.height <= 2.0 || [NSStringFromClass([layer class]) containsString:@"Separator"]) {
@@ -101,13 +108,12 @@ static CGFloat gLastOffsetY = 0;
             }
         }
 
-        // Collect Tab Bar Buttons for Custom Icon Spacing
         NSMutableArray<UIView *> *tabButtons = [NSMutableArray array];
 
         for (UIView *subview in self.subviews) {
             NSString *subClassName = NSStringFromClass([subview class]);
 
-            // COMPLETELY DESTROY TOP LINE / HAIRLINE SEPARATORS
+            // Hide hairline separator views
             if ([subClassName containsString:@"Separator"] || 
                 [subClassName containsString:@"Hairline"] || 
                 [subClassName containsString:@"Shadow"] || 
@@ -119,7 +125,7 @@ static CGFloat gLastOffsetY = 0;
                 subview.alpha = 0.0;
                 [subview removeFromSuperview];
             }
-            // Clear inner background views
+            // Strip inner default background views
             else if ([subClassName containsString:@"Background"] || 
                      [subClassName containsString:@"VisualEffect"] || 
                      [subClassName containsString:@"Backdrop"]) {
@@ -129,7 +135,7 @@ static CGFloat gLastOffsetY = 0;
                 subview.backgroundColor = [UIColor clearColor];
                 subview.layer.borderWidth = 0.0;
             }
-            // Tab Item Buttons
+            // Tab Buttons
             else {
                 subview.hidden = NO;
                 if (subview.alpha < 0.1) subview.alpha = 1.0;
@@ -138,7 +144,7 @@ static CGFloat gLastOffsetY = 0;
             }
         }
 
-        // Layout Icon Spacing inside the Pill
+        // Apply Icon Inner Spacing
         if (tabButtons.count > 0) {
             CGFloat usableWidth = targetWidth - (kIconSpacing * 2);
             CGFloat itemWidth = usableWidth / tabButtons.count;
@@ -176,71 +182,10 @@ static CGFloat gLastOffsetY = 0;
 
     if (deltaY > 15.0 && !gIsBarHiddenByScroll) { 
         gIsBarHiddenByScroll = YES;
-        [UIView animateWithDuration:0.25 animations:^{
-            gTabBarView.alpha = 0.0;
-            gTabBarView.transform = CGAffineTransformMakeTranslation(0, 80);
-        }];
+        setTabBarVisibilityAnimated(gTabBarView, NO);
     } else if (deltaY < -15.0 && gIsBarHiddenByScroll) { 
         gIsBarHiddenByScroll = NO;
-        [UIView animateWithDuration:0.25 animations:^{
-            gTabBarView.alpha = 1.0;
-            gTabBarView.transform = CGAffineTransformIdentity;
-        }];
-    }
-}
-
-%end
-
-%ctor {
-    loadPrefs();
-    CFNotificationCenterAddObserver(
-        CFNotificationCenterGetDarwinNotifyCenter(),
-        NULL,
-        (CFNotificationCallback)loadPrefs,
-        CFSTR("com.custom.igfloatingtabbar/reload"),
-        NULL,
-        CFNotificationSuspensionBehaviorDeliverImmediately
-    );
-}
-
-                subview.hidden = NO;
-                if (subview.alpha < 0.1) subview.alpha = 1.0;
-                [self bringSubviewToFront:subview];
-            }
-        }
-
-        [parent bringSubviewToFront:self];
-    }
-}
-
-%end
-
-// Scroll-to-Hide Handler
-%hook UIScrollView
-
-- (void)setContentOffset:(CGPoint)contentOffset {
-    %orig;
-
-    if (!kEnabled || !gTabBarView) return;
-
-    if (self.contentSize.height <= self.bounds.size.height) return;
-    if (contentOffset.y <= 0 || contentOffset.y >= (self.contentSize.height - self.bounds.size.height)) return;
-
-    CGFloat deltaY = contentOffset.y - gLastOffsetY;
-    gLastOffsetY = contentOffset.y;
-
-    if (deltaY > 15.0 && !gIsBarHiddenByScroll) { 
-        gIsBarHiddenByScroll = YES;
-        [UIView animateWithDuration:0.25 animations:^{
-            gTabBarView.alpha = 0.0;
-            gTabBarView.transform = CGAffineTransformMakeTranslation(0, 80);
-        }];
-    } else if (deltaY < -15.0 && gIsBarHiddenByScroll) { 
-        gIsBarHiddenByScroll = NO;
-        [UIView animateWithDuration:0.25 animations:^{
-            gTabBarView.alpha = 1.0;
-            gTabBarView.transform = CGAffineTransformIdentity;
-        }];
+        setTabBarVisibilityAnimated(gTabBarView, YES);
     }
 }
 
