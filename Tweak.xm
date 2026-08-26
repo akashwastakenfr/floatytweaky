@@ -2,7 +2,7 @@
 
 static NSString *const kPrefPath = @"/var/jb/var/mobile/Library/Preferences/com.custom.igfloatingtabbar.plist";
 
-// Preference Values & Defaults
+// Preferences & Defaults
 static BOOL kEnabled = YES;
 static CGFloat kSideMargin = 16.0;
 static CGFloat kBottomMargin = 16.0;
@@ -13,7 +13,7 @@ static CGFloat kGreenColor = 0.10;
 static CGFloat kBlueColor = 0.10;
 static CGFloat kShadowOpacity = 0.50;
 static CGFloat kShadowRadius = 8.0;
-static CGFloat kBorderWidth = 1.0;
+static CGFloat kBorderWidth = 0.0;
 static CGFloat kBorderAlpha = 0.15;
 
 static void loadPrefs() {
@@ -31,7 +31,7 @@ static void loadPrefs() {
         
         kShadowOpacity = prefs[@"shadowOpacity"] ? [prefs[@"shadowOpacity"] floatValue] : 0.50;
         kShadowRadius = prefs[@"shadowRadius"] ? [prefs[@"shadowRadius"] floatValue] : 8.0;
-        kBorderWidth = prefs[@"borderWidth"] ? [prefs[@"borderWidth"] floatValue] : 1.0;
+        kBorderWidth = prefs[@"borderWidth"] ? [prefs[@"borderWidth"] floatValue] : 0.0;
         kBorderAlpha = prefs[@"borderAlpha"] ? [prefs[@"borderAlpha"] floatValue] : 0.15;
     }
 }
@@ -75,28 +75,34 @@ static CGFloat gLastOffsetY = 0;
         self.layer.masksToBounds = NO;
         self.clipsToBounds = NO;
 
-        // Apply Custom Background RGB + Alpha
+        // Apply Custom Colors & Styles
         if (!gIsBarHiddenByScroll) {
             self.backgroundColor = [UIColor colorWithRed:kRedColor green:kGreenColor blue:kBlueColor alpha:kBarAlpha];
         }
 
-        // Apply Custom Border
         self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:kBorderAlpha].CGColor;
         self.layer.borderWidth = kBorderWidth;
 
-        // Apply Custom Shadow
         self.layer.shadowColor = [UIColor blackColor].CGColor;
         self.layer.shadowOpacity = kShadowOpacity;
         self.layer.shadowOffset = CGSizeMake(0, 4);
         self.layer.shadowRadius = kShadowRadius;
 
+        // Iterate over subviews: Remove top hairline lines & round inner backgrounds
         for (UIView *subview in self.subviews) {
             NSString *subClassName = NSStringFromClass([subview class]);
-            if ([subClassName containsString:@"Background"] || [subClassName containsString:@"VisualEffect"]) {
+            
+            // REMOVE TOP SEPARATOR LINE
+            if ([subClassName containsString:@"Separator"] || [subClassName containsString:@"Line"] || [subClassName containsString:@"Hairline"] || subview.frame.size.height <= 2.0) {
+                subview.hidden = YES;
+                subview.alpha = 0.0;
+            }
+            else if ([subClassName containsString:@"Background"] || [subClassName containsString:@"VisualEffect"] || [subClassName containsString:@"Backdrop"]) {
                 subview.layer.cornerRadius = pillRadius;
                 subview.layer.masksToBounds = YES;
                 subview.clipsToBounds = YES;
                 subview.backgroundColor = [UIColor clearColor];
+                subview.layer.borderWidth = 0.0;
             }
         }
 
@@ -106,7 +112,7 @@ static CGFloat gLastOffsetY = 0;
 
 %end
 
-// Smooth Scroll-to-Hide Handler
+// Scroll-to-Hide Handler
 %hook UIScrollView
 
 - (void)setContentOffset:(CGPoint)contentOffset {
