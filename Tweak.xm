@@ -24,11 +24,9 @@ static void loadPrefs() {
         kBottomMargin = prefs[@"bottomMargin"] ? [prefs[@"bottomMargin"] floatValue] : 16.0;
         kBarHeight = prefs[@"barHeight"] ? [prefs[@"barHeight"] floatValue] : 54.0;
         kBarAlpha = prefs[@"barAlpha"] ? [prefs[@"barAlpha"] floatValue] : 0.88;
-        
         kRedColor = prefs[@"redColor"] ? [prefs[@"redColor"] floatValue] : 0.10;
         kGreenColor = prefs[@"greenColor"] ? [prefs[@"greenColor"] floatValue] : 0.10;
         kBlueColor = prefs[@"blueColor"] ? [prefs[@"blueColor"] floatValue] : 0.10;
-        
         kShadowOpacity = prefs[@"shadowOpacity"] ? [prefs[@"shadowOpacity"] floatValue] : 0.50;
         kShadowRadius = prefs[@"shadowRadius"] ? [prefs[@"shadowRadius"] floatValue] : 8.0;
         kBorderWidth = prefs[@"borderWidth"] ? [prefs[@"borderWidth"] floatValue] : 0.0;
@@ -75,7 +73,6 @@ static CGFloat gLastOffsetY = 0;
         self.layer.masksToBounds = NO;
         self.clipsToBounds = NO;
 
-        // Apply Custom Colors & Styles
         if (!gIsBarHiddenByScroll) {
             self.backgroundColor = [UIColor colorWithRed:kRedColor green:kGreenColor blue:kBlueColor alpha:kBarAlpha];
         }
@@ -88,21 +85,28 @@ static CGFloat gLastOffsetY = 0;
         self.layer.shadowOffset = CGSizeMake(0, 4);
         self.layer.shadowRadius = kShadowRadius;
 
-        // Iterate over subviews: Remove top hairline lines & round inner backgrounds
+        // Cleanly process subviews without breaking icon rendering
         for (UIView *subview in self.subviews) {
             NSString *subClassName = NSStringFromClass([subview class]);
-            
-            // REMOVE TOP SEPARATOR LINE
-            if ([subClassName containsString:@"Separator"] || [subClassName containsString:@"Line"] || [subClassName containsString:@"Hairline"] || subview.frame.size.height <= 2.0) {
+
+            // Hide ONLY top separator lines by class name
+            if ([subClassName containsString:@"Separator"] || [subClassName containsString:@"Hairline"] || [subClassName containsString:@"ShadowView"]) {
                 subview.hidden = YES;
                 subview.alpha = 0.0;
             }
+            // Transparent inner background views
             else if ([subClassName containsString:@"Background"] || [subClassName containsString:@"VisualEffect"] || [subClassName containsString:@"Backdrop"]) {
                 subview.layer.cornerRadius = pillRadius;
                 subview.layer.masksToBounds = YES;
                 subview.clipsToBounds = YES;
                 subview.backgroundColor = [UIColor clearColor];
                 subview.layer.borderWidth = 0.0;
+            }
+            // Ensure button icons remain visible on top
+            else {
+                subview.hidden = NO;
+                if (subview.alpha < 0.1) subview.alpha = 1.0;
+                [self bringSubviewToFront:subview];
             }
         }
 
