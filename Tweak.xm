@@ -8,13 +8,27 @@ static CGFloat kSideMargin = 16.0;
 static CGFloat kBottomMargin = 16.0;
 static CGFloat kBarHeight = 54.0;
 static CGFloat kBarAlpha = 0.88;
-static CGFloat kRedColor = 0.10;
-static CGFloat kGreenColor = 0.10;
-static CGFloat kBlueColor = 0.10;
-static CGFloat kShadowOpacity = 0.50;
-static CGFloat kShadowRadius = 8.0;
-static CGFloat kBorderWidth = 0.0;
-static CGFloat kBorderAlpha = 0.15;
+static CGFloat kIconSpacing = 8.0;
+static NSString *kHexColor = @"#1A1A1A";
+
+// Helper: Convert Hex String to UIColor
+static UIColor *colorFromHexString(NSString *hexString) {
+    if (!hexString || hexString.length == 0) return [UIColor colorWithRed:0.10 green:0.10 blue:0.10 alpha:1.0];
+    NSString *cleanString = [hexString stringByReplacingOccurrencesOfString:@"#" withString:@""];
+    if (cleanString.length == 3) {
+        cleanString = [NSString stringWithFormat:@"%@%@%@%@%@%@",
+                       [cleanString substringWithRange:NSMakeRange(0, 1)], [cleanString substringWithRange:NSMakeRange(0, 1)],
+                       [cleanString substringWithRange:NSMakeRange(1, 1)], [cleanString substringWithRange:NSMakeRange(1, 1)],
+                       [cleanString substringWithRange:NSMakeRange(2, 1)], [cleanString substringWithRange:NSMakeRange(2, 1)]];
+    }
+    unsigned rgbValue = 0;
+    NSScanner *scanner = [NSScanner scannerWithString:cleanString];
+    [scanner scanHexInt:&rgbValue];
+    return [UIColor colorWithRed:((rgbValue & 0xFF0000) >> 16) / 255.0
+                           green:((rgbValue & 0xFF00) >> 8) / 255.0
+                            blue:(rgbValue & 0xFF) / 255.0
+                           alpha:1.0];
+}
 
 static void loadPrefs() {
     NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
@@ -24,13 +38,8 @@ static void loadPrefs() {
         kBottomMargin = prefs[@"bottomMargin"] ? [prefs[@"bottomMargin"] floatValue] : 16.0;
         kBarHeight = prefs[@"barHeight"] ? [prefs[@"barHeight"] floatValue] : 54.0;
         kBarAlpha = prefs[@"barAlpha"] ? [prefs[@"barAlpha"] floatValue] : 0.88;
-        kRedColor = prefs[@"redColor"] ? [prefs[@"redColor"] floatValue] : 0.10;
-        kGreenColor = prefs[@"greenColor"] ? [prefs[@"greenColor"] floatValue] : 0.10;
-        kBlueColor = prefs[@"blueColor"] ? [prefs[@"blueColor"] floatValue] : 0.10;
-        kShadowOpacity = prefs[@"shadowOpacity"] ? [prefs[@"shadowOpacity"] floatValue] : 0.50;
-        kShadowRadius = prefs[@"shadowRadius"] ? [prefs[@"shadowRadius"] floatValue] : 8.0;
-        kBorderWidth = prefs[@"borderWidth"] ? [prefs[@"borderWidth"] floatValue] : 0.0;
-        kBorderAlpha = prefs[@"borderAlpha"] ? [prefs[@"borderAlpha"] floatValue] : 0.15;
+        kIconSpacing = prefs[@"iconSpacing"] ? [prefs[@"iconSpacing"] floatValue] : 8.0;
+        kHexColor = prefs[@"hexColor"] ? prefs[@"hexColor"] : @"#1A1A1A";
     }
 }
 
@@ -59,6 +68,7 @@ static CGFloat gLastOffsetY = 0;
         CGRect superBounds = parent.bounds;
         if (superBounds.size.height < 100) return;
 
+        // Floaty Bar Spacing & Positioning
         CGFloat targetWidth = superBounds.size.width - (kSideMargin * 2);
         CGFloat targetX = kSideMargin;
         CGFloat targetY = superBounds.size.height - kBarHeight - kBottomMargin;
@@ -73,37 +83,126 @@ static CGFloat gLastOffsetY = 0;
         self.layer.masksToBounds = NO;
         self.clipsToBounds = NO;
 
+        // Apply Color & Opacity (No Shadows)
         if (!gIsBarHiddenByScroll) {
-            self.backgroundColor = [UIColor colorWithRed:kRedColor green:kGreenColor blue:kBlueColor alpha:kBarAlpha];
+            UIColor *baseColor = colorFromHexString(kHexColor);
+            self.backgroundColor = [baseColor colorWithAlphaComponent:kBarAlpha];
         }
 
-        self.layer.borderColor = [UIColor colorWithWhite:1.0 alpha:kBorderAlpha].CGColor;
-        self.layer.borderWidth = kBorderWidth;
+        self.layer.shadowOpacity = 0.0;
+        self.layer.borderWidth = 0.0;
 
-        self.layer.shadowColor = [UIColor blackColor].CGColor;
-        self.layer.shadowOpacity = kShadowOpacity;
-        self.layer.shadowOffset = CGSizeMake(0, 4);
-        self.layer.shadowRadius = kShadowRadius;
+        // Sublayer Top Line Neutralization
+        if (self.layer.sublayers) {
+            for (CALayer *layer in [self.layer.sublayers copy]) {
+                if (layer.frame.size.height <= 2.0 || [NSStringFromClass([layer class]) containsString:@"Separator"]) {
+                    [layer removeFromSuperlayer];
+                }
+            }
+        }
 
-        // Cleanly process subviews without breaking icon rendering
+        // Collect Tab Bar Buttons for Custom Icon Spacing
+        NSMutableArray<UIView *> *tabButtons = [NSMutableArray array];
+
         for (UIView *subview in self.subviews) {
             NSString *subClassName = NSStringFromClass([subview class]);
 
-            // Hide ONLY top separator lines by class name
-            if ([subClassName containsString:@"Separator"] || [subClassName containsString:@"Hairline"] || [subClassName containsString:@"ShadowView"]) {
+            // COMPLETELY DESTROY TOP LINE / HAIRLINE SEPARATORS
+            if ([subClassName containsString:@"Separator"] || 
+                [subClassName containsString:@"Hairline"] || 
+                [subClassName containsString:@"Shadow"] || 
+                [subClassName containsString:@"Line"] || 
+                [subClassName containsString:@"Border"] ||
+                subview.frame.size.height <= 3.0) {
+                
                 subview.hidden = YES;
                 subview.alpha = 0.0;
+                [subview removeFromSuperview];
             }
-            // Transparent inner background views
-            else if ([subClassName containsString:@"Background"] || [subClassName containsString:@"VisualEffect"] || [subClassName containsString:@"Backdrop"]) {
+            // Clear inner background views
+            else if ([subClassName containsString:@"Background"] || 
+                     [subClassName containsString:@"VisualEffect"] || 
+                     [subClassName containsString:@"Backdrop"]) {
                 subview.layer.cornerRadius = pillRadius;
                 subview.layer.masksToBounds = YES;
                 subview.clipsToBounds = YES;
                 subview.backgroundColor = [UIColor clearColor];
                 subview.layer.borderWidth = 0.0;
             }
-            // Ensure button icons remain visible on top
+            // Tab Item Buttons
             else {
+                subview.hidden = NO;
+                if (subview.alpha < 0.1) subview.alpha = 1.0;
+                [tabButtons addObject:subview];
+                [self bringSubviewToFront:subview];
+            }
+        }
+
+        // Layout Icon Spacing inside the Pill
+        if (tabButtons.count > 0) {
+            CGFloat usableWidth = targetWidth - (kIconSpacing * 2);
+            CGFloat itemWidth = usableWidth / tabButtons.count;
+
+            for (NSInteger i = 0; i < tabButtons.count; i++) {
+                UIView *btn = tabButtons[i];
+                CGRect btnFrame = btn.frame;
+                btnFrame.origin.x = kIconSpacing + (i * itemWidth);
+                btnFrame.size.width = itemWidth;
+                btnFrame.origin.y = 0;
+                btnFrame.size.height = kBarHeight;
+                btn.frame = btnFrame;
+            }
+        }
+
+        [parent bringSubviewToFront:self];
+    }
+}
+
+%end
+
+// Scroll-to-Hide Handler
+%hook UIScrollView
+
+- (void)setContentOffset:(CGPoint)contentOffset {
+    %orig;
+
+    if (!kEnabled || !gTabBarView) return;
+
+    if (self.contentSize.height <= self.bounds.size.height) return;
+    if (contentOffset.y <= 0 || contentOffset.y >= (self.contentSize.height - self.bounds.size.height)) return;
+
+    CGFloat deltaY = contentOffset.y - gLastOffsetY;
+    gLastOffsetY = contentOffset.y;
+
+    if (deltaY > 15.0 && !gIsBarHiddenByScroll) { 
+        gIsBarHiddenByScroll = YES;
+        [UIView animateWithDuration:0.25 animations:^{
+            gTabBarView.alpha = 0.0;
+            gTabBarView.transform = CGAffineTransformMakeTranslation(0, 80);
+        }];
+    } else if (deltaY < -15.0 && gIsBarHiddenByScroll) { 
+        gIsBarHiddenByScroll = NO;
+        [UIView animateWithDuration:0.25 animations:^{
+            gTabBarView.alpha = 1.0;
+            gTabBarView.transform = CGAffineTransformIdentity;
+        }];
+    }
+}
+
+%end
+
+%ctor {
+    loadPrefs();
+    CFNotificationCenterAddObserver(
+        CFNotificationCenterGetDarwinNotifyCenter(),
+        NULL,
+        (CFNotificationCallback)loadPrefs,
+        CFSTR("com.custom.igfloatingtabbar/reload"),
+        NULL,
+        CFNotificationSuspensionBehaviorDeliverImmediately
+    );
+}
+
                 subview.hidden = NO;
                 if (subview.alpha < 0.1) subview.alpha = 1.0;
                 [self bringSubviewToFront:subview];
