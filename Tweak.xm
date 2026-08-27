@@ -10,7 +10,7 @@ static const CGFloat kGreenColor = 0.10;
 static const CGFloat kBlueColor = 0.10;
 static const CGFloat kShadowOpacity = 0.50;
 static const CGFloat kShadowRadius = 8.0;
-static const CGFloat kBorderWidth = 1.0;
+static const CGFloat kBorderWidth = 0.0;
 static const CGFloat kBorderAlpha = 0.15;
 
 static __weak UIView *gTabBarView = nil;
