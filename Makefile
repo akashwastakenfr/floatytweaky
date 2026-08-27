@@ -4,10 +4,11 @@ ARCHS = arm64 arm64e
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = IGFloatingTabBar
+TWEAK_NAME = AyorFloat
 
-IGFloatingTabBar_FILES = Tweak.xm
-IGFloatingTabBar_CFLAGS = -fobjc-arc
-IGFloatingTabBar_FRAMEWORKS = UIKit CoreGraphics
+AyorFloat_FILES = Tweak.xm
+AyorFloat_CFLAGS = -fobjc-arc
+AyorFloat_FRAMEWORKS = UIKit CoreGraphics
+AyorFloat_INSTALL_PATH = /Library/MobileSubstrate/DynamicLibraries
 
 include $(THEOS)/makefiles/tweak.mk
