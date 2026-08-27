@@ -1,40 +1,17 @@
 #import <UIKit/UIKit.h>
 
-static NSString *const kPrefPath = @"/var/jb/var/mobile/Library/Preferences/com.custom.igfloatingtabbar.plist";
-
-// Preference Values & Defaults
-static BOOL kEnabled = YES;
-static CGFloat kSideMargin = 16.0;
-static CGFloat kBottomMargin = 16.0;
-static CGFloat kBarHeight = 54.0;
-static CGFloat kBarAlpha = 0.88;
-static CGFloat kRedColor = 0.10;
-static CGFloat kGreenColor = 0.10;
-static CGFloat kBlueColor = 0.10;
-static CGFloat kShadowOpacity = 0.50;
-static CGFloat kShadowRadius = 8.0;
-static CGFloat kBorderWidth = 1.0;
-static CGFloat kBorderAlpha = 0.15;
-
-static void loadPrefs() {
-    NSDictionary *prefs = [NSDictionary dictionaryWithContentsOfFile:kPrefPath];
-    if (prefs) {
-        kEnabled = prefs[@"enabled"] ? [prefs[@"enabled"] boolValue] : YES;
-        kSideMargin = prefs[@"sideMargin"] ? [prefs[@"sideMargin"] floatValue] : 16.0;
-        kBottomMargin = prefs[@"bottomMargin"] ? [prefs[@"bottomMargin"] floatValue] : 16.0;
-        kBarHeight = prefs[@"barHeight"] ? [prefs[@"barHeight"] floatValue] : 54.0;
-        kBarAlpha = prefs[@"barAlpha"] ? [prefs[@"barAlpha"] floatValue] : 0.88;
-        
-        kRedColor = prefs[@"redColor"] ? [prefs[@"redColor"] floatValue] : 0.10;
-        kGreenColor = prefs[@"greenColor"] ? [prefs[@"greenColor"] floatValue] : 0.10;
-        kBlueColor = prefs[@"blueColor"] ? [prefs[@"blueColor"] floatValue] : 0.10;
-        
-        kShadowOpacity = prefs[@"shadowOpacity"] ? [prefs[@"shadowOpacity"] floatValue] : 0.50;
-        kShadowRadius = prefs[@"shadowRadius"] ? [prefs[@"shadowRadius"] floatValue] : 8.0;
-        kBorderWidth = prefs[@"borderWidth"] ? [prefs[@"borderWidth"] floatValue] : 1.0;
-        kBorderAlpha = prefs[@"borderAlpha"] ? [prefs[@"borderAlpha"] floatValue] : 0.15;
-    }
-}
+// Hardcoded Constants - No Settings
+static const CGFloat kSideMargin = 16.0;
+static const CGFloat kBottomMargin = 16.0;
+static const CGFloat kBarHeight = 54.0;
+static const CGFloat kBarAlpha = 0.88;
+static const CGFloat kRedColor = 0.10;
+static const CGFloat kGreenColor = 0.10;
+static const CGFloat kBlueColor = 0.10;
+static const CGFloat kShadowOpacity = 0.50;
+static const CGFloat kShadowRadius = 8.0;
+static const CGFloat kBorderWidth = 1.0;
+static const CGFloat kBorderAlpha = 0.15;
 
 static __weak UIView *gTabBarView = nil;
 static BOOL gIsBarHiddenByScroll = NO;
@@ -45,7 +22,6 @@ static CGFloat gLastOffsetY = 0;
 - (void)layoutSubviews {
     %orig;
 
-    if (!kEnabled) return;
     NSString *bundleID = [[NSBundle mainBundle] bundleIdentifier];
     if (![bundleID isEqualToString:@"com.burbn.instagram"]) return;
 
@@ -112,7 +88,7 @@ static CGFloat gLastOffsetY = 0;
 - (void)setContentOffset:(CGPoint)contentOffset {
     %orig;
 
-    if (!kEnabled || !gTabBarView) return;
+    if (!gTabBarView) return;
 
     if (self.contentSize.height <= self.bounds.size.height) return;
     if (contentOffset.y <= 0 || contentOffset.y >= (self.contentSize.height - self.bounds.size.height)) return;
@@ -136,15 +112,3 @@ static CGFloat gLastOffsetY = 0;
 }
 
 %end
-
-%ctor {
-    loadPrefs();
-    CFNotificationCenterAddObserver(
-        CFNotificationCenterGetDarwinNotifyCenter(),
-        NULL,
-        (CFNotificationCallback)loadPrefs,
-        CFSTR("com.custom.igfloatingtabbar/reload"),
-        NULL,
-        CFNotificationSuspensionBehaviorDeliverImmediately
-    );
-}
