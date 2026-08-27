@@ -73,6 +73,14 @@ static CGFloat gLastOffsetY = 0;
                 subview.layer.masksToBounds = YES;
                 subview.clipsToBounds = YES;
                 subview.backgroundColor = [UIColor clearColor];
+                // Remove any borders from subviews
+                subview.layer.borderWidth = 0.0;
+                subview.layer.borderColor = [UIColor clearColor].CGColor;
+            }
+            // Remove separators and dividers
+            if ([subClassName containsString:@"Separator"] || [subClassName containsString:@"Divider"] || [subClassName containsString:@"Line"]) {
+                subview.hidden = YES;
+                subview.alpha = 0.0;
             }
         }
 
