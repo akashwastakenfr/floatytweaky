@@ -1,5 +1,5 @@
-Package: com.custom.igfloatingtabbar
-Name: IG Floating TabBar
+Package: com.ayor.ayorfloat
+Name: AyorFloat
 Depends: mobilesubstrate
 Version: 1.1.0
 Architecture: iphoneos-arm64
