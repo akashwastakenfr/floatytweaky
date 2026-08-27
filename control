@@ -3,7 +3,7 @@ Name: IG Floating TabBar
 Depends: mobilesubstrate, preferenceloader
 Version: 1.1.0
 Architecture: iphoneos-arm64
-Description: Floating pill-style tab bar tweak for Instagram with Settings & Scroll-to-Hide.
-Maintainer: Developer
-Author: Developer
+Description: Floating pill-style tab bar tweak for Instagram with customizable appearance and smooth scroll-to-hide animation. Compatible with iOS 14-16.
+Maintainer: ayor
+Author: ayor
 Section: Tweaks
